@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup
+spec:
+  description: Clean generated files before testing.
+  steps:
+    - name: cleanup
+      image: python:3.9-slim
+      script: |
+        #!/bin/sh
+        rm -rf .pytest_cache .coverage coverage.xml
+        find . -type d -name __pycache__ -prune -exec rm -rf {} +
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose
+spec:
+  description: Install dependencies, lint the code, and run Nose unit tests.
+  steps:
+    - name: test
+      image: python:3.9-slim
+      script: |
+        #!/bin/sh
+        set -e
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        flake8 service tests --count --show-source --statistics
+        nosetests
